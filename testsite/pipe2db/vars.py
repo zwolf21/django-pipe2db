@@ -1,0 +1,14 @@
+MODEL = 'model'
+UNIQUE_KEY = 'unique_key'
+FOREIGIN_KEY_FIELDS = 'foreignkey_fields'
+MANYTOMANY_FIELDS = 'manytomany_fields'
+SOURCE_URL_FIELDS = 'source_url_fields'
+CONTENT_FILE_FIELDS = 'contentfile_fields'
+RENAME_FIELDS = 'rename_fields'
+EXCLUDE_FIELDS = 'exclude_fields'
+
+VALIDATE_KEYS = [
+    MODEL, UNIQUE_KEY, FOREIGIN_KEY_FIELDS,
+    MANYTOMANY_FIELDS, SOURCE_URL_FIELDS,
+    CONTENT_FILE_FIELDS, RENAME_FIELDS, EXCLUDE_FIELDS,
+]
