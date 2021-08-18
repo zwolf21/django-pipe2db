@@ -1,12 +1,11 @@
-from pipe2db import pipe2db
-
+from pipe2db import pipe
 
 
 class MockScraper:
 
 
 
-    @pipe2db({
+    @pipe({
         'model': 'bookstore.BookInstance',
         'foreignkey_fields':{
             'book':{

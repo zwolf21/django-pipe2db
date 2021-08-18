@@ -4,7 +4,7 @@ from .core import PipeReducer
 
 
 
-def pipe2db(context):
+def pipe(context):
     ''' 'model'
         'unique_key'
         'foreignkey_fields'
