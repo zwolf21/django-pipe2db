@@ -4,13 +4,12 @@ from pipe2db import pipe
 class MockScraper:
 
 
-
     @pipe({
         'model': 'bookstore.BookInstance',
         'foreignkey_fields':{
             'book':{
                 'model': 'bookstore.Book',
-                'unique_key': 'isbn',
+                'unique_key': ['isbn', 'title'],
                 'rename_fields': {
                     'descriptions': 'summary',
                 },
@@ -24,6 +23,7 @@ class MockScraper:
                     'genre': {
                         'model': 'bookstore.Genre',
                         'unique_key': 'name',
+                        # 'method': 'get'
                     }
                 }
             }
@@ -66,7 +66,7 @@ class MockScraper:
         }
 
         book1 = {
-            'title': 'oh happy day', 'author': author1, 'descriptions': 'very happy', 'isbn': '1234640841', 'genre': [genre1, genre2]
+            'title': 'oh happy day', 'author': author1, 'descriptions': 'very happy', 'isbn': '1234640841', 'genre': ['journel']
         }
         book2 = {
             'title': 'pathology', 'author': author3, 'descriptions': 'very sick', 'isbn': '7417130841', 'genre': [genre4]
@@ -83,7 +83,7 @@ class MockScraper:
 
         book_instance_list = [
             {
-                'book': book3, 'imprint': 'iwqejadfaodfadf', 'due_back': '2021-08-17'
+                'book': book2, 'imprint': 'iwqejadfaodfadf', 'due_back': '2021-08-17'
             },
             {
                 'book': book3, 'imprint': 'afeadjaofjdalf', 'due_back': '2021-08-21'
@@ -105,4 +105,6 @@ class MockScraper:
             },
         ]
         yield from book_instance_list
-        
+  
+
+

@@ -1,0 +1,6 @@
+django
+scrapy
+django-extensions
+django-pipe2db
+billiard
+pillow

@@ -5,14 +5,38 @@ from .core import PipeReducer
 
 
 def pipe(context):
-    ''' 'model'
-        'unique_key'
-        'foreignkey_fields'
-        'manytomany_fields'
-        'source_url_fields'
-        'contentfile_fields'
-        'rename_fields'
-        'exclude_fields'
+    '''
+    @pipe({
+        'model': 'bookstore.BookInstance',
+        'foreignkey_fields':{
+            'book':{
+                'model': 'bookstore.Book',
+                'unique_key': ['isbn', 'title'],
+                'rename_fields': {
+                    'descriptions': 'summary',
+                },
+                'foreignkey_fields': {
+                    'author': {
+                        'model': 'bookstore.Author',
+                        'unique_key': 'email',
+                    }
+                },
+                'manytomany_fields': {
+                    'genre': {
+                        'model': 'bookstore.Genre',
+                        'unique_key': 'name',
+                    }
+                },
+                'contentfile_fields': {
+                    'book_image': {
+                        'source_url_field': 'src'
+                    }
+                }
+            }
+        }
+    })
+    def parse(self, response=None):
+        author1 = {'
     '''
     def wrapper(parser):
         @wraps(parser)
