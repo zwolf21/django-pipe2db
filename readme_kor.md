@@ -108,7 +108,7 @@ from pipe2db import pipe
 - 데이터를 생산한 함수를 장식하여 데이터를 장고 모델에 저장해줍니다
 - 생산한 데이터와 장고 모델과의 관계를 담은 컨텍스트 정보를 인수로 받습니다.
   ```python
-    @pipe{
+    @pipe({
         'model': 'bookstore.Book',
         'unique_key': 'isbn',
         'foreignkey_fields': {
@@ -117,7 +117,7 @@ from pipe2db import pipe
                 'unique_key': 'email',
             }
         }
-    }
+    })
     def process_item(self, item):
         return item
   ```
