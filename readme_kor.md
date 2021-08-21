@@ -4,7 +4,7 @@
 ## 소개
 
 - 파이썬 함수에서 리턴한 데이터를 장고 모델로 저장해주는 하나의 유용한 데코레이터 입니다
-- 파이썬 3.7 이상 django 3.0 이상의 환경에서 제작 되었습니다.
+- 파이썬 3.8, django 3.2 환경에서 제작 되었습니다.
 
 ## 사용 목적
 
@@ -31,14 +31,34 @@ from pipe2db import pipe
 ### 1. 기본 개념
 - 다음 3가지 사항을 고려해야 합니다
 
-#### 생성자 함수
+#### 1. 데코레이터 - pipe
+
+- 데이터를 생산한 함수를 장식하여 데이터를 장고 모델에 저장해줍니다
+- 생산한 데이터와 장고 모델과의 관계를 담은 컨텍스트 정보를 인수로 받습니다.
+  ```python
+    @pipe{
+        'model': 'bookstore.Book',
+        'unique_key': 'isbn',
+        'foreignkey_fields': {
+            'author': {
+                'model': 'bookstore.Author',
+                'unique_key': 'email',
+            }
+        }
+    }
+    def process_item(self, item):
+        return item
+  ```
+
+#### 2. 생성자 함수
 - 단일개체: 딕셔너리 형태로 return 하거나 yield 합니다
 - 복수개체: 딕셔너리를 리스트에 담아서 return 합니다. 리스트 전체를 yield해서는 안됩니다.
-- 딕셔너리의 키 이름과과 모델의 필드 이름이 서로 매칭되어야합니다
+- 딕셔너리의 키 이름과 모델의 필드 이름이 서로 매칭되어야합니다
 - 스크래피의 파이프라인을 각 아이템별로 라우팅하여 분리된 process_item에 사용할 수 있습니다.
   - foreignkey, manytomany fields와 같은 관계형 필드는 내포된 딕셔너리, 리스트 형태로 값을 지정합니다.
   - 리턴되는 딕셔너리의 키이름과 모델의 필드 이름이 다를 경우 context의 rename_fields 속성을 통해 해결 할수 있습니다.
   - 딕셔너리에 모델의 필드내역에 없는 키가 있을 경우 context의 exclude_fields 속성을 통해 해결 할수 있습니다.
+  
     ```python
         def process_item(self, item):
             book_list = [
@@ -65,9 +85,9 @@ from pipe2db import pipe
       - 위와같이 book의 딕셔너리에 author 딕셔너리를 내포하여 리턴하여 줍니다.
 
 
-#### 컨텍스트
+#### 3. 컨텍스트
 - 자바스크립트 스타일의 json형태를 띄고 있습니다.
-- 함수가 생산한 데이터와 장고 모델과의 관계를 담고 있는 중첩된 사전입니다.
+- 함수가 생산한 데이터와 장고 모델과의 관계를 담고 있는 중첩 된 사전입니다.
 - 모델간의 관계에 따라 재귀적으로 여러겹으로 중첩될 수 있습니다
 - 컨텍스트 사전에는 다음과 같은 키(기능) 들을 적용 할수 있습니다
 - 앞서 리턴한 관계를 foreignkey_fields속성을 사용하여 재귀적으로 구성 합니다.
@@ -84,11 +104,11 @@ from pipe2db import pipe
         }
     }
     ```
-    - model: 현재 생성하는 데이터가 연결 될 장고 모델, 모델을 직접 임포트 하지 않아도 모델의 문자열 경로를 지정합니다.
-    - unique_key: 탐색에 필욯나 모델이 갖고 있는 유일키, 지정하지 않으면 데이터의 중복등 문제 발생할수 있으므로 가급적 지정하는게 좋습니다.
-      - 단일값이나 유일성을 지정하기 위해서 복수의 값을 리스트 형태로 지정할수 있습니다. 예(['isbn', 'title'])
+    - model: 현재 생성하는 데이터가 연결 될 장고 모델, 모델을 직접 임포트 하지 않아도 되며 모델의 문자열 경로를 지정합니다.
+    - unique_key: 탐색에 필요한 모델이 갖고 있는 유일키, 지정하지 않으면 데이터의 중복등 문제 발생할수 있으므로 가급적 지정하는게 좋습니다.
+      - 유일성을 지정하기 위해서 복수의 값을 리스트 형태로 지정할 수도 있습니다. 예(['isbn', 'title'])
     - foreignkey_fields: 모델이 갖고 있는 외래키, 내포된 컨텍스트를 재귀적으로 지정합니다.
-    - manytomany_fields: foreignkey_fields키와 마찬가지로 연결된 모델의 컨텍스트를 지정합니다.
+    - manytomany_fields: foreignkey_fields키와 마찬가지로 연결된 모델의 컨텍스트를 내포하여 지정합니다.
     - contentfile_fields: 이미지, 파일등의 binary data 가 포함된 필드를 표현합니다
       - source_url_fields: 장고의 meida 폴더에 저장하기 위해선 파일의 출처가 있는 경로도 리턴한 딕셔너리키에 포함되어 있어야합니다.
        ```python
@@ -101,32 +121,14 @@ from pipe2db import pipe
         yield image       
        ```
     - rename_fields: 어떠한 이유에 의해서 리턴한 데이터의 키이름 모델의 필드이름이 다를경우 데이터키: 모델필드 형식으로 매칭시켜 줍니다
-    - exclude_fields: 리턴한 데이터가 모델에 존재하지 않는 필드를 포함하지 않는 키를 갖는경우 지정해 주어야 합니다.
+    - exclude_fields: 리턴한 데이터가 모델의 필드명에 존재하지 않는 키를 갖는 경우 지정해 주어서 배제 할수 있습니다
 
- #### 데코레이터 - pipe
 
-- 데이터를 생산한 함수를 장식하여 데이터를 장고 모델에 저장해줍니다
-- 생산한 데이터와 장고 모델과의 관계를 담은 컨텍스트 정보를 인수로 받습니다.
-  ```python
-    @pipe{
-        'model': 'bookstore.Book',
-        'unique_key': 'isbn',
-        'foreignkey_fields': {
-            'author': {
-                'model': 'bookstore.Author',
-                'unique_key': 'email',
-            }
-        }
-    }
-    def process_item(self, item):
-        return item
-  ```
 
 
 ## 2. 튜토리얼
 ### 1. 기본 예시
-- 다음과 같은 모델이 있습니다
-- 책의 저자의 정보에 대한 모델입니다
+- 다음과 같은 책의 저자 정보에 대한 모델이 있습니다
     ```python
     class Author(models.Model):
         email = models.EmailField('Email', unique=True)
@@ -137,7 +139,7 @@ from pipe2db import pipe
     ```
 - 다음과 같은 데이터를 생성하는 함수가 있습니다.
 - 간단한 키와 값으로 이루어진 여러개의 사전을 리스트에 담아서 리턴하는 구조입니다.
-- 모델의 각 필드 이름과 반환값의 딕셔너리의 키가 매칭이 되어있습니다.
+- 모델의 각 필드 이름이 반환값의 딕셔너리의 키에 매칭이 되어있습니다.
     ```python
     def process_author_item(item):
         author_items = [    
@@ -175,8 +177,8 @@ from pipe2db import pipe
         return author_items
     ```
     - pipe 데코레이터로 process_author_item 함수를 장식하여 줍니다.
-    - context 정보로 연결될 모델에 대한 정보를 지정합니다
-    - 함수가 실행되고 결과를 리턴하는 시점에 장고모델로 데이터들을 insert 합니다
+    - context의 정보로는 연결될 모델에 대한 정보를 지정 합니다
+    - 함수가 실행되고 결과를 리턴하는 시점에 장고 모델로 데이터들을 create 합니다
 
 
 ### 2. 관계형 테이블
@@ -192,7 +194,7 @@ from pipe2db import pipe
         summary = models.TextField(max_length=1000, help_text='Enter a brief description of the book') 
         isbn = models.CharField('ISBN', max_length=13, unique=True, help_text='13 Character ISBN number</a>')
   ```
-- 다음과 같이 Author와 Book 데이터를 같이 리턴하는 함수에 데코레이터를 적용하겠습니다.
+- 다음과 같이 Book 데이터 사전의 author 키에 Author 데이터 사전을 내포하여 같이 리턴하는 함수에 데코레이터를 적용하겠습니다.
 - *foreignkey_fields*를 이용하여 author데이터가 book 데이터 안에 내포되어 있는 형태를 계층적으로 표현합니다.
 - *foreignkey_fields*의 값은 재귀적으로 author의 컨텍스트가 됩니다
 - 즉 book cotext가 author 컨텍스트를 품고 있는 모양이 됩니다.
@@ -271,9 +273,9 @@ from pipe2db import pipe
  
 - 만약 Author와 Book 데이터를 위와같이 동시에 얻은 상황이 아니라 Author 데이터가 기존에 있고
 - Book 데이터는 기존에 존재하는 Author데이터와 외래키 관계만 맺어 주는 상황이라면 
-- author키의 값으로 Author 데이터 전체를 딕셔너리로 지정할 필요 없이 Author의 유일키값만 지정해줘도 됩니다. (문자열이나 숫자여야 함)
+- author키의 값으로 Author 데이터 전체를 딕셔너리로 지정할 필요 없이 Author의 유일키 값만 지정해줘도 됩니다. (문자열이나 숫자여야 함)
 - 또한 데코레이터의 method에 get이라고 지정해 줄 수있습니다.
-- method는 지정해 주지 않아도 기본값 create로 작동하며, unique_key에 딕셔너리가아닌 문자열이나 숫자를 넘기면 get으로 작동하긴 합니다.
+- method는 지정해 주지 않으면 기본값 create로 작동하며, 리턴한 사전의 foreignkey 에 해당하는 키의 값으로 내포된 딕셔너리가 아닌 문자열이나 숫자를 지정하면 get으로 작동하긴 합니다.
   
     ```python
     @pipe({
@@ -320,7 +322,7 @@ from pipe2db import pipe
     ```
 ----
 #### 2. 다대다 관계에 있는 데이터의 pipe
-- 아래와 같이 Book 모델과 다대다 관계를 갖고 있는 Genre 모델이 있습니다
+  - 아래와 같이 Book 모델과 다대다 관계를 갖고 있는 Genre 모델이 있습니다
     ```python
     # Create your models here.
     class Genre(models.Model):
@@ -338,7 +340,7 @@ from pipe2db import pipe
 
         genre = models.ManyToManyField(Genre, help_text='Select a genre for this book')
     ```
-- 이럴 경우엔 함수의 리턴 데이터를 genre 데이터를 리스트 형태로 지정해 줍니다.
+  - 이럴 경우엔 함수의 리턴 데이터 사전의 genre 키값으로 Genre의 데이터를 리스트 형태로 지정해 줍니다.
     ```python
     genre1 = {'name': 'action'}
     genre2 = {'name': 'fantasy'}
@@ -410,8 +412,8 @@ from pipe2db import pipe
     ```
 ----
 #### 3. 중첩된 관계
-- 다중으로 외래키가 중첩된 형태의 데이터의 경우 컨텍스트도 그에 맞게 지정하면 됩니다
-- 아래와 같이 Book의 대여 기록을 갱신하는 모델인 BookInstance 모델이 있습니다. 
+  - 다중으로 외래키가 중첩된 형태의 데이터의 경우 컨텍스트도 그에 맞게 지정하면 됩니다
+  - 아래와 같이 Book의 대여 기록을 갱신하는 모델인 BookInstance 모델이 있습니다. 
     ```python
     class BookInstance(models.Model):
       id = models.UUIDField(primary_key=True, default=uuid.uuid4, help_text='Unique ID for this particular book across whole library')
@@ -436,11 +438,11 @@ from pipe2db import pipe
           ordering = ['due_back']
 
     ```
-    - BookInstance 모델은 Book을 외래키로 하므로 외래키 관계는 BookInstance->Book-> Author 이렇듯 2중으로 중첩되게 됩니다.
+    - BookInstance 모델은 Book을 외래키로 하므로 외래키 관계는 BookInstance-> Book-> Author 이렇듯 2중으로 중첩되게 됩니다.
   
-- 아래와 같이 BookInstance, Book, Author, Genre등 여러 계층의 중첩된 데이터를 리턴하는경우
-- 가장 하위에 계층에 있는 데이터를 중심으로 컨텍스트를 작성합니다
-- 데이터가 내포되어 있는 구조 그대로 작성합니다.
+  - 아래와 같이 BookInstance, Book, Author, Genre등 여러 계층의 중첩된 데이터를 리턴하는경우
+  - 가장 하위에 계층에 있는 데이터를 시작으로 컨텍스트를 작성합니다
+  - 데이터가 내포되어 있는 구조 그대로 작성합니다.
     ```python
     @pipe({
         'model': 'bookstore.BookInstance', # unique_key가 지정되지 않는 모델이므로 중복된 create가 발생 합니다.
@@ -543,12 +545,12 @@ from pipe2db import pipe
 ----
 
 ### 3. 컨텐트파일
-- 이미지나 파일같은 바이너리 데이터의 처리는 다양하게 지원하지는 않습니다
+- 현재 이 라이브러리는 이미지나 파일같은 바이너리 데이터의 처리는 다양하게 지원하지는 않습니다
 - 아래와 같이 간단한 이미지 저장용 모델과 그 데이터를 생성하는 함수가 있습니다.
     ```python
     class Image(models.Model):
         img = models.ImageField()
-        src = modles.UrlField('image url')
+        my_src = modles.UrlField('image url')
     ```
     ```python
 
@@ -586,7 +588,10 @@ from pipe2db import pipe
                     'source_url_fields': 'my_src' # 파일로 저정하려면 파일의 원본 출처를 꼭 지정하여 주어야 합니다.
                 }
             },
-            'exclude_fields': ['my_src'] # src 키가 실제 모델에 없는 필드일 때는 exclude 시켜 주어야 합니다.
+            'rename_fields': {
+                'src': 'my_src'
+            }
+           # 'exclude_fields': ['my_src'] # src 키가 실제 모델에 없는 필드일 때는 exclude 시켜 주어야 합니다.
         })
         def parse_image(self, response):
 
@@ -596,10 +601,7 @@ from pipe2db import pipe
             }
         ```
 
-
-
-
-
+ 
 
 
 
