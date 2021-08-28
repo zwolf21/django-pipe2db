@@ -1,26 +1,44 @@
 from django.apps import apps
+from django.db import models
 from django.db.models import Model
 
-from .vars import  METHOD_CREATE, UNIQUE_KEY
+from .vars import *
+
+
+def _validate_uniquekey(unique_key):
+    if not isinstance(unique_key, (list, tuple, str)):
+        raise ValueError(f"{UNIQUE_KEY} must be str, tuple, or list")
+    if isinstance(unique_key, str):
+        unique_key = [unique_key]
+    return unique_key
 
 
 def get(model, unique_key, item):
-    if not isinstance(unique_key, (list, tuple, str)):
-        raise ValueError(f"{UNIQUE_KEY} must be str, tuple, or list")
-    
-    if isinstance(unique_key, str):
-        unique_key = [unique_key]
+    unique_key = _validate_uniquekey(unique_key)
 
     kwargs = {
         key:item[key] for key in unique_key
     }
-    
     try:
-        object =  model.objects.get(**kwargs)
+        object = model.objects.get(**kwargs)
     except model.MultipleObjectsReturned:
-        raise KeyError(f"{unique_key} is not unique filelds in {model._meta.object_name}")
-    else:
-        return object
+        raise KeyError(f"{unique_key} is not unique filelds in {model._meta.object_name}")            
+    return object
+
+
+def update(model, unique_key, item):
+    object = get(model, unique_key, item)
+    unique_keys = _validate_uniquekey(unique_key)
+    
+    pkset = {k:v for k, v in item.items() if k in unique_keys}
+    defaults = {k:v for k, v in item.items() if k not in unique_keys}
+    
+    obj, created = model.objects.update_or_create(defaults=defaults, **pkset)
+    return obj
+
+
+
+
 
 
 def create(model, item):
@@ -74,7 +92,6 @@ def rename_column(item, oldnewset):
     return item
 
 
-
 def get_or_create(
     model_name, unique_key, item,
     m2m_fields=None, exclude_fields=None, rename_fields=None,
@@ -83,7 +100,7 @@ def get_or_create(
 
     model = get_model(model_name)
 
-    if method == METHOD_CREATE:
+    if method in [METHOD_CREATE, METHOD_UPDATE]:
         m2mset = pop_m2m_column(item, m2m_fields)
         item = rename_column(item, rename_fields)
         item = drop_exclude_column(item, exclude_fields)
@@ -94,8 +111,14 @@ def get_or_create(
             try:
                 object = get(model, unique_key, item)
             except model.DoesNotExist:
+                if method == METHOD_UPDATE:
+                    raise ValueError(f"When the method is {METHOD_UPDATE}, the value of the item corresponding to the unique key({unique_key}) of the model cannot be changed.")
                 object = create(model, item)
-
+            except model.MultipleObjectsReturned:
+                raise KeyError(f"{unique_key} is not unique filelds in {model._meta.object_name}")            
+            else:
+                if method == METHOD_UPDATE:
+                    object = update(model, unique_key, item)
         add_m2m_items(object, m2mset)
 
     else:
