@@ -21,6 +21,7 @@ def destorybookinstance():
     'foreignkey_fields':{
         'book':{
             'model': 'bookstore.Book',
+            # 'method': 'update',
             'unique_key': ['isbn', 'title'],
             'rename_fields': {
                 'descriptions': 'summary',
@@ -42,6 +43,41 @@ def destorybookinstance():
 })
 def insert_book_instance():
     destroyall()
+    yield bookinstance1_nested_all
+    yield bookinstance2_nested_all
+    yield bookinstance3_nested_all
+    yield bookinstance4_nested_all
+    yield bookinstance5_nested_all
+
+
+@pipe({
+    'model': 'bookstore.BookInstance',
+    'foreignkey_fields':{
+        'book':{
+            'model': 'bookstore.Book',
+            'method': 'update',
+            'unique_key': ['isbn', 'title'],
+            'rename_fields': {
+                'descriptions': 'summary',
+            },
+            'foreignkey_fields': {
+                'author': {
+                    'model': 'bookstore.Author',
+                    'method': 'update',
+                    'unique_key': 'email',
+                }
+            },
+            'manytomany_fields': {
+                'genre': {
+                    'model': 'bookstore.Genre',
+                    'unique_key': 'name',
+                }
+            }
+        }
+    }
+})
+def update_book_instance():
+    # destroyall()
     yield bookinstance1_nested_all
     yield bookinstance2_nested_all
     yield bookinstance3_nested_all
@@ -75,7 +111,6 @@ def insert_booK_by_author_key_genre_key():
     yield book3_with_key_author_key_genre
     yield book4_with_key_author_key_genre
     yield book5_with_key_author_key_genre
-
 
 
 

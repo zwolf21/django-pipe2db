@@ -1,7 +1,7 @@
 from collections import abc
 from types import GeneratorType
 from pathlib import Path
-import types
+from copy import deepcopy
 
 from django.core.files.base import ContentFile
 
@@ -29,7 +29,7 @@ class PipeReducer:
         if isinstance(results, (GeneratorType, map, filter)):
             results = list(results)
             
-        return results
+        return deepcopy(results)
     
     def _validate_context(self, context, stauts='model', pwd='top-level'):
 
@@ -62,20 +62,18 @@ class PipeReducer:
 
 
 
-
     
     def reduce(self, many=True):
         '''깊이 탐색 방식으로 재귀호출하여 context와 results 에 내포된 외래키 형식을 처리
-
         '''
         method = self.context.get(METHOD, METHOD_CREATE)
 
-        if method == METHOD_CREATE:
+        if method in [METHOD_UPDATE, METHOD_CREATE]:
             for field_name, fk_context in self.context.get(FOREIGIN_KEY_FIELDS, {}).items():
                 for item in self.results:
                     fk_item = item[field_name]
-                    if issubclass(fk_item.__class__, abc.Mapping):
-                        fk_item = fk_item.copy()
+                    # if issubclass(fk_item.__class__, abc.Mapping):
+                    #     fk_item = deepcopy(fk_item)
                     subreducer = self.__class__(fk_context, fk_item)
                     item[field_name] = subreducer.reduce(many=False)
 
@@ -101,10 +99,6 @@ class PipeReducer:
         self.results = [
             self._val2obj(item) for item in self.results
         ]                    
-        # elif method == METHOD_GET:
-        # else:
-        #     raise ValueError(f"You can specify '{METHOD_CREATE}' and '{METHOD_GET}' as method names.")
-
    
             
         if model_name := self.context.get(MODEL):
