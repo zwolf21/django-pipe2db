@@ -125,7 +125,7 @@ from pipe2db import pipe
     - foreignkey_fields: 모델이 갖고 있는 외래키, 내포된 컨텍스트를 재귀적으로 지정합니다.
     - manytomany_fields: foreignkey_fields키와 마찬가지로 연결된 모델의 컨텍스트를 내포하여 지정합니다.
     - contentfile_fields: 이미지, 파일등의 binary data 가 포함된 필드를 표현합니다
-      - source_url_fields: 장고의 meida 폴더에 저장하기 위해선 파일의 출처가 있는 경로도 리턴한 딕셔너리키에 포함되어 있어야합니다.
+      - source_url_field: 장고의 meida 폴더에 저장하기 위해선 파일의 출처가 있는 경로도 리턴한 딕셔너리키에 포함되어 있어야합니다.
        ```python
        '''
         image = {
@@ -575,7 +575,7 @@ from pipe2db import pipe
         'unique_key': 'src',
         'contentfile_fields': {
             'img': {
-                'source_url_fields': 'src' # 파일로 저정하려면 파일의 원본 출처를 꼭 지정하여 주어야 합니다.
+                'source_url_field': 'src' # 파일로 저정하려면 파일의 원본 출처를 꼭 지정하여 주어야 합니다.
             }
         }
     })
@@ -587,8 +587,8 @@ from pipe2db import pipe
         }
     ```
     - 위와 같이 contentfile_fields 속성을 img 키에에 지정해 주었습니다.
-    - source_url_fields 속성을 내포하여 지정해 주었는데요, 이 필드를 토대로 이미지의 파일명을 정하기 때문에 반드시 데이터에 포함시켜야 하는 일종의 메타 데이터입니다.
-    - 아래와 같이 source_url_fields이 모델에서는 필요가 없다면 exclude_fields에 지정하여 주면 됩니다.
+    - source_url_field 속성을 내포하여 지정해 주었는데요, 이 필드를 토대로 이미지의 파일명을 정하기 때문에 반드시 데이터에 포함시켜야 하는 일종의 메타 데이터입니다.
+    - 아래와 같이 source_url_field 가 모델에서는 필요가 없다면 exclude_fields 에 지정하여 주면 됩니다.
         ```python
         class Image(models.Model):
             img = models.ImageField()
@@ -601,7 +601,7 @@ from pipe2db import pipe
             'unique_key': 'src',
             'contentfile_fields': {
                 'img': {
-                    'source_url_fields': 'my_src' # 파일로 저정하려면 파일의 원본 출처를 꼭 지정하여 주어야 합니다.
+                    'source_url_field': 'my_src' # 파일로 저정하려면 파일의 원본 출처를 꼭 지정하여 주어야 합니다.
                 }
             },
             'rename_fields': {
