@@ -111,8 +111,8 @@ def get_or_create(
             try:
                 object = get(model, unique_key, item)
             except model.DoesNotExist:
-                if method == METHOD_UPDATE:
-                    raise ValueError(f"When the method is {METHOD_UPDATE}, the value of the item corresponding to the unique key({unique_key}) of the model cannot be changed.")
+                # if method == METHOD_UPDATE:
+                #     raise ValueError(f"When the method is {METHOD_UPDATE}, the value of the item corresponding to the unique key({unique_key}) of the model cannot be changed.")
                 object = create(model, item)
             except model.MultipleObjectsReturned:
                 raise KeyError(f"{unique_key} is not unique filelds in {model._meta.object_name}")            
