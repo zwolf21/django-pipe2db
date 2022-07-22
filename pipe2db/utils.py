@@ -1,4 +1,4 @@
-import os
+import os, sys
 
 from django.apps import apps
 from django.db import models
@@ -162,6 +162,8 @@ def setupdb(*apps:str, db_settings:dict=None, default_db_name='pipe2db.sqlite3',
         print(f"DJANGO_SETTINGS_MODULE already setted as {module}")
         return
 
+    for app in apps:
+        sys.path.append(os.path.dirname(app.__path__[0]))
 
     settings.configure(
         INSTALLED_APPS=[
