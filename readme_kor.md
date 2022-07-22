@@ -6,6 +6,7 @@
     - [사용 목적](#사용-목적)
     - [설치](#설치)
     - [임포트](#임포트)
+    - [django 프로젝트를 사용하지 않고 DB기능(orm)만 이용할 경우 setupdb 함수를 이용합니다.](#django-프로젝트를-사용하지-않고-db기능orm만-이용할-경우-setupdb-함수를-이용합니다)
   - [1. 기본 개념](#1-기본-개념)
     - [1. 데코레이터 - pipe](#1-데코레이터---pipe)
     - [2. 생성자 함수](#2-생성자-함수)
@@ -30,18 +31,30 @@
 - 예를들어 북스토어 싸이트에서 데이터를 가져올 경우 특정 페이지 안에 저자, 책, 서평, 장르구분 등 1:N, M:N 등의 관계가 있는 정보들이 혼재 되어 있습니다.
 - 그러한 관계성 있는 데이터를 작은 데코레이터 함수로 장고 모델과 연결시켜 줍니다
 - 장고코드와 데이터를 가져오는 코드가 섞이지 않고 서로 독립성을 유지 할 수 있게 해줍니다.
+- 장고 프로젝트가 내부가 아니라도 장고 orm을 사용하여 DB Table 생성, Insert, Update 작업을 할수 있습니다.
 
 ### 설치
-
 ```code
 pip install django-pipe2db
 ```
 ### 임포트
 ```python
-from pipe2db import pipe
+from pipe2db import pipe, setupdb
 ```
 
+---
 
+### django 프로젝트를 사용하지 않고 DB기능(orm)만 이용할 경우 setupdb 함수를 이용합니다.
+- 패키지/models.py 에 Model만 정의하면 바로 사용이 가능합니다
+- 사용법: setupdb('패키지')
+    
+```python
+## pipe의 모델인자를 문자열 형식이아닌 실제 모델 클래스를 사용 할 경우 모델을 임포트하기 전에 setupdb를 실행합니다.
+setupdb('bookstore')
+from .bookstore import Book
+```
+
+---
 
 ## 1. 기본 개념
 - 다음 3가지 사항을 고려해야 합니다
@@ -51,7 +64,7 @@ from pipe2db import pipe
 - 데이터를 생산한 함수를 장식하여 데이터를 장고 모델에 저장해줍니다
 - 생산한 데이터와 장고 모델과의 관계를 담은 컨텍스트 정보를 인수로 받습니다.
   ```python
-    @pipe{
+    @pipe({
         'model': 'bookstore.Book',
         'unique_key': 'isbn',
         'foreignkey_fields': {
@@ -60,7 +73,7 @@ from pipe2db import pipe
                 'unique_key': 'email',
             }
         }
-    }
+    })
     def process_item(self, item):
         return item
   ```
@@ -195,6 +208,7 @@ from pipe2db import pipe
     - pipe 데코레이터로 process_author_item 함수를 장식하여 줍니다.
     - context의 정보로는 연결될 모델에 대한 정보를 지정 합니다
     - 함수가 실행되고 결과를 리턴하는 시점에 장고 모델로 데이터들을 create 합니다
+
 
 
 ### 2. 관계형 테이블

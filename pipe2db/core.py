@@ -5,11 +5,8 @@ from copy import deepcopy
 
 from django.core.files.base import ContentFile
 
-from .utils import  get_or_create
+from .utils import get_or_create
 from .vars import *
-
-
-
 
 
 
@@ -23,7 +20,7 @@ class PipeReducer:
         if isinstance(results, str):
             results = [results]
 
-        if issubclass(results.__class__, abc.Mapping):
+        if isinstance(results, abc.Mapping):
             results = [results]
 
         if isinstance(results, (GeneratorType, map, filter)):
@@ -45,11 +42,9 @@ class PipeReducer:
             
         if stauts == 'model':
             if not context.get('model'):
-                raise KeyError(f"The '{pwd}' field must have a 'model'")
-        
+                raise KeyError(f"The '{pwd}' field must have a 'model'")    
         return context
     
-
     def _val2obj(self, item):
         if isinstance(item, (str, int)):
             if unique_key_name := self.context.get(UNIQUE_KEY):
@@ -60,9 +55,6 @@ class PipeReducer:
                 )
         return item
 
-
-
-    
     def reduce(self, many=True):
         '''깊이 탐색 방식으로 재귀호출하여 context와 results 에 내포된 외래키 형식을 처리
         '''

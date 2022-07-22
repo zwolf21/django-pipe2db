@@ -1,6 +1,9 @@
+import os
+
 from django.apps import apps
 from django.db import models
-from django.db.models import Model
+from django.conf import settings
+from django.core.management import execute_from_command_line
 
 from .vars import *
 
@@ -37,10 +40,6 @@ def update(model, unique_key, item):
     return obj
 
 
-
-
-
-
 def create(model, item):
     return model.objects.create(**item)
 
@@ -48,7 +47,7 @@ def create(model, item):
 def get_model(model_name):
     if isinstance(model_name, str):
         model = apps.get_model(model_name)
-    elif issubclass(model_name.__class__, Model):
+    elif issubclass(model_name, models.Model):
         model = model_name
     else:
         raise ValueError(f"The type of {model_name} must be str or model class")
@@ -133,5 +132,51 @@ def get_or_create(
 
     
 
+def setupdb(*apps:str, db_settings:dict=None, default_db_name='pipe2db.sqlite3', **extra_settings):
+    '''Enables Django's orm and management to be used as a standalone db
+        need to be run before import models
+
+    :param apps: directories as pa where models.py is located
+    :param db_settings: database setting in django's settings.py, defaults to sqlite
+    :default_db_name: Specify db name when using sqlite as default
+    :extra_settings: config for django's settings.py
+    
+    ```python
+    # db_settings example for sqlite
+    settings = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'your_db_file_name.sqlite3'
+        }
+    }
+    setupdb('db', db_settigns=settings)
+
+    # extra_settings examples
+    setupdb('db', TIME_ZONE='Asia/Seoul', USE_TZ=False)
+
+    from db.models import Author
+    ```
+    
+    '''
+    if module := os.environ.get('DJANGO_SETTINGS_MODULE'):
+        print(f"DJANGO_SETTINGS_MODULE already setted as {module}")
+        return
 
 
+    settings.configure(
+        INSTALLED_APPS=[
+            *apps
+        ],
+        DATABASES = db_settings or {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': default_db_name
+            }
+        },
+        DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
+        **extra_settings
+    )
+    commands='makemigrations', 'migrate',
+    for app in apps:
+        for commmand in commands:
+            execute_from_command_line(['_', commmand, app])

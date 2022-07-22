@@ -24,3 +24,4 @@ man/
 test.*
 *.cfg
 *.egg-info
+*.sqlite3

@@ -13,4 +13,4 @@ pipe2db 데코레이터를 데이터 생산자 함수에 장식 하고 장식자
 '''
 
 from .decorators import pipe
-from .core import PipeReducer
+from .utils import setupdb

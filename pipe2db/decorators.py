@@ -8,6 +8,8 @@ def pipe(context):
     '''
     @pipe({
         'model': 'bookstore.BookInstance',
+        # 'method': 'create', # insert mode as default
+        # 'method': 'update', # update mode
         'foreignkey_fields':{
             'book':{
                 'model': 'bookstore.Book',
