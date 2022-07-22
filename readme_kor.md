@@ -46,11 +46,12 @@ from pipe2db import pipe, setupdb
 
 ### django 프로젝트를 사용하지 않고 DB기능(orm)만 이용할 경우 setupdb 함수를 이용합니다.
 - 패키지/models.py 에 Model만 정의하면 바로 사용이 가능합니다
-- 사용법: setupdb('패키지')
+- 사용법: setupdb(패키지)
     
 ```python
 ## pipe의 모델인자를 문자열 형식이아닌 실제 모델 클래스를 사용 할 경우 모델을 임포트하기 전에 setupdb를 실행합니다.
-setupdb('bookstore')
+import tests.bookstore
+setupdb(tests.bookstore)
 from .bookstore import Book
 ```
 

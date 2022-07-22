@@ -1,11 +1,16 @@
+import os, sys, inspect, importlib
 from collections import abc
 from types import GeneratorType
 from pathlib import Path
 from copy import deepcopy
 
+from django.conf import settings
+from django.core.management import execute_from_command_line
 from django.core.files.base import ContentFile
+from django.utils.module_loading import import_string
 
-from .utils import get_or_create
+
+from .utils import get_or_create, get_base_module_name, get_module_dir
 from .vars import *
 
 
@@ -25,7 +30,10 @@ class PipeReducer:
 
         if isinstance(results, (GeneratorType, map, filter)):
             results = list(results)
-            
+        
+        if results is None or not results or results[0] is None:
+            return
+                    
         return deepcopy(results)
     
     def _validate_context(self, context, stauts='model', pwd='top-level'):
@@ -92,7 +100,6 @@ class PipeReducer:
             self._val2obj(item) for item in self.results
         ]                    
    
-            
         if model_name := self.context.get(MODEL):
             unique_key = self.context.get(UNIQUE_KEY)
             if unique_key is None:
@@ -112,3 +119,62 @@ class PipeReducer:
     
 
 
+def setupdb(*db_apps, db_settings:dict=None, default_db_name='pipe2db.sqlite3', **extra_settings):
+    '''Enables Django's orm and management to be used as a standalone db
+        need to be run before import models
+
+    :param db_app: package as imported that models.py is located
+    :param db_settings: database setting in django's settings.py, defaults to sqlite
+    :default_db_name: Specify db name when using sqlite as default
+    :extra_settings: config for django's settings.py
+    
+    ```python
+    # db_settings example for sqlite
+    settings = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'your_db_file_name.sqlite3'
+        }
+    }
+    setupdb('db', db_settigns=settings)
+
+    # extra_settings examples
+    setupdb('db', TIME_ZONE='Asia/Seoul', USE_TZ=False)
+
+    from db.models import Author
+    ```
+    
+    '''
+    if module := os.environ.get('DJANGO_SETTINGS_MODULE'):
+        print(f"DJANGO_SETTINGS_MODULE already setted as {module}")
+        return
+
+    apps = []
+    for db_app in db_apps:
+        if isinstance(db_app, str):
+            db_app = importlib.import_module(db_app)
+
+        if inspect.ismodule(db_app):
+            module_dir = get_module_dir(db_app)
+        else:
+            raise ValueError(f'{db_app} must be packages which contains models.py') 
+
+        sys.path.append(module_dir)
+        app = get_base_module_name(db_app)
+        apps.append(app)
+
+    settings.configure(
+        INSTALLED_APPS=apps,
+        DATABASES = db_settings or {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': default_db_name
+            }
+        },
+        DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
+        **extra_settings
+    )
+    commands='makemigrations', 'migrate',
+    for app in apps:
+        for commmand in commands:
+            execute_from_command_line(['_', commmand, app])

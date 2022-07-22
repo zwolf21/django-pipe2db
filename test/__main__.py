@@ -1,6 +1,15 @@
-import argparse
+import argparse, os, sys
 
-from insert import insert
+ENV_DIR = os.path.dirname(os.path.dirname(__file__))
+
+
+try:
+    from bookstore.insert import insert
+except:
+    sys.path.append(ENV_DIR)
+    from bookstore.insert import insert
+
+
 
 
 def main():

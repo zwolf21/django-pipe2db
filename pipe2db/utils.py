@@ -1,9 +1,11 @@
+<<<<<<< HEAD
 import os, sys
+=======
+import inspect, itertools, os
+>>>>>>> 9a48d1ac39767e8e3a460d8314023d2f97518a36
 
 from django.apps import apps
 from django.db import models
-from django.conf import settings
-from django.core.management import execute_from_command_line
 
 from .vars import *
 
@@ -131,54 +133,24 @@ def get_or_create(
     return object
 
     
+def module2dict(module):
+    return dict(itertools.takewhile(lambda i: i[0] != '__builtins__', inspect.getmembers(module)))
 
-def setupdb(*apps:str, db_settings:dict=None, default_db_name='pipe2db.sqlite3', **extra_settings):
-    '''Enables Django's orm and management to be used as a standalone db
-        need to be run before import models
 
-    :param apps: directories as pa where models.py is located
-    :param db_settings: database setting in django's settings.py, defaults to sqlite
-    :default_db_name: Specify db name when using sqlite as default
-    :extra_settings: config for django's settings.py
-    
-    ```python
-    # db_settings example for sqlite
-    settings = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'your_db_file_name.sqlite3'
-        }
-    }
-    setupdb('db', db_settigns=settings)
+def get_base_module_name(module):
+    *_, base = module.__name__.split('.')
+    return base
 
-    # extra_settings examples
-    setupdb('db', TIME_ZONE='Asia/Seoul', USE_TZ=False)
+def get_module_dir(module):
+    return os.path.dirname(module.__path__[0])
 
-    from db.models import Author
-    ```
-    
-    '''
-    if module := os.environ.get('DJANGO_SETTINGS_MODULE'):
-        print(f"DJANGO_SETTINGS_MODULE already setted as {module}")
-        return
+from glob import glob
+import os
 
-    for app in apps:
-        sys.path.append(os.path.dirname(app.__path__[0]))
-
-    settings.configure(
-        INSTALLED_APPS=[
-            *apps
-        ],
-        DATABASES = db_settings or {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': default_db_name
-            }
-        },
-        DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
-        **extra_settings
-    )
-    commands='makemigrations', 'migrate',
-    for app in apps:
-        for commmand in commands:
-            execute_from_command_line(['_', commmand, app])
+def find_module(module_name):
+    root = os.path.dirname(os.path.abspath('.'))
+    root = os.path.abspath('.')
+    root = os.path.join(root, 'test')
+    print(root)
+    for path in glob('./**/*.py', recursive=True, root_dir=root):
+        print(path)
