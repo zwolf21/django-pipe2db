@@ -1,10 +1,10 @@
 from pipe2db import pipe, setupdb
-from pipe2db.utils import find_module
+from pipe2db.utils import find_models_module
 from samples import *
 
-import bookstore
+# import db
 
-setupdb('bookstore.db')
+setupdb()
 
 
 @pipe({
@@ -13,9 +13,8 @@ setupdb('bookstore.db')
     'method': 'update'
 })
 def insert():
-    # find_module('bookstore.db')
-    yield
-    # yield author1
+    # find_models_module()
+    yield author1
     # yield author2
     # yield author3
 

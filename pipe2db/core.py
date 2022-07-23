@@ -7,10 +7,8 @@ from copy import deepcopy
 from django.conf import settings
 from django.core.management import execute_from_command_line
 from django.core.files.base import ContentFile
-from django.utils.module_loading import import_string
 
-
-from .utils import get_or_create, get_base_module_name, get_module_dir
+from .utils import get_or_create, get_base_module_name, get_module_dir, find_models_module
 from .vars import *
 
 
@@ -31,7 +29,7 @@ class PipeReducer:
         if isinstance(results, (GeneratorType, map, filter)):
             results = list(results)
         
-        if results is None or not results or results[0] is None:
+        if not results or not results[0]:
             return
                     
         return deepcopy(results)
@@ -123,12 +121,19 @@ def setupdb(*db_apps, db_settings:dict=None, default_db_name='pipe2db.sqlite3', 
     '''Enables Django's orm and management to be used as a standalone db
         need to be run before import models
 
-    :param db_app: package as imported that models.py is located
+    :param db_app: package as module which models.py is located, if null, finding db app automatically
     :param db_settings: database setting in django's settings.py, defaults to sqlite
     :default_db_name: Specify db name when using sqlite as default
     :extra_settings: config for django's settings.py
     
     ```python
+    # auto find and setup db with no args
+    setupdb()
+
+    # specifiy db app witch contains models.py
+    # ..../.../bookstore/db/models.py
+    setupdb('bookstore.db')
+
     # db_settings example for sqlite
     settings = {
         'default': {
@@ -136,10 +141,10 @@ def setupdb(*db_apps, db_settings:dict=None, default_db_name='pipe2db.sqlite3', 
             'NAME': 'your_db_file_name.sqlite3'
         }
     }
-    setupdb('db', db_settigns=settings)
+    setupdb('bookstore.db', db_settigns=settings)
 
     # extra_settings examples
-    setupdb('db', TIME_ZONE='Asia/Seoul', USE_TZ=False)
+    setupdb('bookstore.db', TIME_ZONE='Asia/Seoul', USE_TZ=False)
 
     from db.models import Author
     ```
@@ -149,20 +154,31 @@ def setupdb(*db_apps, db_settings:dict=None, default_db_name='pipe2db.sqlite3', 
         print(f"DJANGO_SETTINGS_MODULE already setted as {module}")
         return
 
+    if settings.configured:
+        print("Settings already configured.")
+        return
+
     apps = []
-    for db_app in db_apps:
-        if isinstance(db_app, str):
-            db_app = importlib.import_module(db_app)
+    if db_apps:
+        for db_app in db_apps:
+            if isinstance(db_app, str):
+                db_app = importlib.import_module(db_app)
 
-        if inspect.ismodule(db_app):
-            module_dir = get_module_dir(db_app)
-        else:
-            raise ValueError(f'{db_app} must be packages which contains models.py') 
-
-        sys.path.append(module_dir)
-        app = get_base_module_name(db_app)
+            if inspect.ismodule(db_app):
+                module_dir = get_module_dir(db_app)
+            else:
+                raise ValueError(f'{db_app} must be packages which contains models.py') 
+            if module_dir not in sys.path:
+                sys.path.append(module_dir)
+            app = get_base_module_name(db_app)
+            apps.append(app)
+    else:
+        path = find_models_module()
+        module_dir, app = os.path.split(path)
         apps.append(app)
-
+        if module_dir not in sys.path:
+            sys.path.append(module_dir)
+    
     settings.configure(
         INSTALLED_APPS=apps,
         DATABASES = db_settings or {

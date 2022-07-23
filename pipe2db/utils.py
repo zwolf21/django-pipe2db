@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import os, sys
-=======
 import inspect, itertools, os
->>>>>>> 9a48d1ac39767e8e3a460d8314023d2f97518a36
 
 from django.apps import apps
 from django.db import models
@@ -141,16 +137,54 @@ def get_base_module_name(module):
     *_, base = module.__name__.split('.')
     return base
 
+
+
 def get_module_dir(module):
     return os.path.dirname(module.__path__[0])
+
+
 
 from glob import glob
 import os
 
-def find_module(module_name):
-    root = os.path.dirname(os.path.abspath('.'))
+
+def is_subdir(root_dir, sub_dir):
+    if os.path.isfile(root_dir):
+        root_dir = os.path.dirname(root_dir)
+    root = os.path.abspath(root_dir)
+    sub = os.path.abspath(sub_dir)
+
+    if len(root) != len(sub):
+        return root == sub[:len(root)]
+    return root != sub
+
+
+def find_models_module(current=None):
+    if not current:
+        stack, *_ = [
+            stack for stack in inspect.stack()
+            if not is_subdir(__file__, stack.filename)
+        ]
+        current = stack.filename
+
+    if os.path.isfile(current):
+        current = os.path.dirname(current)
+
     root = os.path.abspath('.')
-    root = os.path.join(root, 'test')
-    print(root)
-    for path in glob('./**/*.py', recursive=True, root_dir=root):
-        print(path)
+
+    paths = []
+    while is_subdir(root, current):
+        for path in glob('**/models.py', recursive=True, root_dir=current):
+            p = os.path.join(current, path)
+            if p in paths:
+                continue
+            paths.append(p)
+        current = os.path.dirname(current)
+
+    if not paths:
+        raise ValueError('Cannot find package which contains models.py')
+
+    if len(paths) > 1:
+        raise ValueError(f'Muitiple module path matched: {paths}')
+
+    return os.path.dirname(paths[0])
