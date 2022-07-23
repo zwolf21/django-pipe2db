@@ -1,4 +1,4 @@
-import inspect, itertools, os
+import inspect, itertools, os, glob
 
 from django.apps import apps
 from django.db import models
@@ -145,10 +145,6 @@ def get_module_dir(module):
 
 
 
-from glob import glob
-import os
-
-
 def is_subdir(root_dir, sub_dir):
     if os.path.isfile(root_dir):
         root_dir = os.path.dirname(root_dir)
@@ -175,7 +171,7 @@ def find_models_module(current=None):
 
     paths = []
     while is_subdir(root, current):
-        for path in glob('**/models.py', recursive=True, root_dir=current):
+        for path in glob.glob('**/models.py', recursive=True, root_dir=current):
             p = os.path.join(current, path)
             if p in paths:
                 continue
