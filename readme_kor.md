@@ -6,7 +6,7 @@
     - [사용 목적](#사용-목적)
     - [설치](#설치)
     - [임포트](#임포트)
-    - [django 프로젝트를 사용하지 않고 DB기능(orm)만 이용할 경우 setupdb 함수를 이용합니다.](#django-프로젝트를-사용하지-않고-db기능orm만-이용할-경우-setupdb-함수를-이용합니다)
+    - [django 프로젝트를 사용하지 않고 DB기능(orm)만 이용할 경우 setupdb 함수를 이용 합니다.](#django-프로젝트를-사용하지-않고-db기능orm만-이용할-경우-setupdb-함수를-이용-합니다)
   - [1. 기본 개념](#1-기본-개념)
     - [1. 데코레이터 - pipe](#1-데코레이터---pipe)
     - [2. 생성자 함수](#2-생성자-함수)
@@ -44,15 +44,45 @@ from pipe2db import pipe, setupdb
 
 ---
 
-### django 프로젝트를 사용하지 않고 DB기능(orm)만 이용할 경우 setupdb 함수를 이용합니다.
+### django 프로젝트를 사용하지 않고 DB기능(orm)만 이용할 경우 setupdb 함수를 이용 합니다.
+- 장고 ORM을 Stand Alone 형태로 사용
 - 패키지/models.py 에 Model만 정의하면 바로 사용이 가능합니다
 - 사용법: setupdb(패키지)
     
 ```python
-## pipe의 모델인자를 문자열 형식이아닌 실제 모델 클래스를 사용 할 경우 모델을 임포트하기 전에 setupdb를 실행합니다.
-import tests.bookstore
-setupdb(tests.bookstore)
+## somecrawler.py
+
+from pipe2db import pipe, setupdb
+
+## models.py 가 있는 모듈을 지정
+setupdb('bookstore.db')
+
+
 from .bookstore import Book
+@pipe({
+    'model': 'db.Author',
+    ...
+})
+def crawl(...):
+    ...
+    yield {'email': 123 , 'first_name': 'abc'}
+```
+
+
+```python
+## crawer.py
+from pipe2db import pipe, setupdb
+
+## 모듈을 지정하지 않으면 crawler.py 인근의 models.py 를 포함하는 모듈을 탐색하여 자동으로 세팅 해줍니다
+setupdb()
+
+@pipe({
+    'model': 'db.Author',
+    ...
+})
+def crawl():
+    ...
+    yield {'email': 123 , 'first_name': 'abc'}
 ```
 
 ---
