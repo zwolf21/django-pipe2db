@@ -1,4 +1,5 @@
 from pipe2db import pipe, setupdb
+from django.apps import apps
 
 
 setupdb()
@@ -33,7 +34,16 @@ author3 = {
     'model': 'db.Author',
     'unique_key': 'email',
 })
-def insert():
+def insert(Author, Book):
+    # Author = apps.get_model('db.Author')
+    qs = Author.objects.values_list()
+    for row in qs:
+        print(row)
+    
+    
+    for m in apps.get_models():
+        print(m.__name__)
+
     yield author1
     yield author2
     yield author3
@@ -46,7 +56,7 @@ def insert():
     'unique_key': 'email',
     'method': 'update'
 })
-def insert():
+def insert_and_update():
     author1['first_name'] = 'updated'
     yield author2
     yield author3

@@ -74,19 +74,37 @@ def insert():
 ## somecrawler.py
 
 from pipe2db import pipe, setupdb
-
+from django.apps import apps
 ## models.py 가 있는 모듈을 지정
 setupdb('bookstore.db')
 
 
-from .bookstore import Book
+
 @pipe({
     'model': 'db.Author',
     ...
 })
 def crawl(...):
+    # 장고 모델을 불러와서 사용 하기
+    Author = apps.get_model('db.Author')
+    for row in Author.objects.values():
+        print(row)
     ...
     yield {'email': 123 , 'first_name': 'abc'}
+
+
+# 더욱 놀라운 방법으로 모델 클래스를 가져오는법
+@pipe({
+    'model': 'db.Author',
+    ...
+})
+def crawl(Author, Book, ...):
+    # pipe가 장식하는 함수의 인자로 모델 클래스명을 선언하면 바로 사용이 가능 
+    for row in Author.objects.values():
+        print(row)
+    ...
+    yield {'email': 123 , 'first_name': 'abc'}
+
 ```
 
 

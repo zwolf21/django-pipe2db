@@ -185,3 +185,18 @@ def find_models_module(current=None):
         raise ValueError(f'Muitiple module path matched: {paths}')
 
     return os.path.dirname(paths[0])
+
+
+def get_kwargnames(callable):
+    sig = inspect.signature(callable)
+    return list(sig.parameters)
+
+
+def select_kwargs(callable, *args, allowed_params:list=None, **kwargs):
+    allowed_params = allowed_params or []
+    allowed_params += get_kwargnames(callable)
+    kwargs = {
+        key: value for key, value in kwargs.items()
+        if key in allowed_params
+    }
+    return callable(*args, **kwargs)
