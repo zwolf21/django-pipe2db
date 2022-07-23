@@ -45,7 +45,7 @@ def pipe(context):
         def pipe(*args, **kwargs):
             results = parser(*args, **kwargs)
             reducer = PipeReducer(context, results)
-            if reducer.results:
+            if reducer.is_valid():
                 reducer.reduce()
             return results
         return pipe

@@ -30,8 +30,7 @@ class PipeReducer:
             results = list(results)
         
         if not results or not results[0]:
-            return
-                    
+            return            
         return deepcopy(results)
     
     def _validate_context(self, context, stauts='model', pwd='top-level'):
@@ -60,6 +59,9 @@ class PipeReducer:
                     f"When method is '{METHOD_GET}', the key of 'unique_key' is required in manytomany_fields"
                 )
         return item
+    
+    def is_valid(self):
+        return bool(self.results)
 
     def reduce(self, many=True):
         '''깊이 탐색 방식으로 재귀호출하여 context와 results 에 내포된 외래키 형식을 처리
@@ -69,24 +71,23 @@ class PipeReducer:
         if method in [METHOD_UPDATE, METHOD_CREATE]:
             for field_name, fk_context in self.context.get(FOREIGIN_KEY_FIELDS, {}).items():
                 for item in self.results:
-                    fk_item = item[field_name]
-                    # if issubclass(fk_item.__class__, abc.Mapping):
-                    #     fk_item = deepcopy(fk_item)
-                    subreducer = self.__class__(fk_context, fk_item)
-                    item[field_name] = subreducer.reduce(many=False)
+                    if fk_item := item.get(field_name):
+                        # if issubclass(fk_item.__class__, abc.Mapping):
+                        #     fk_item = deepcopy(fk_item)
+                        subreducer = self.__class__(fk_context, fk_item)
+                        item[field_name] = subreducer.reduce(many=False)
 
 
             for field_name, m2m_context in self.context.get(MANYTOMANY_FIELDS, {}).items():
                 for item in self.results:
-                    m2m_item_list = item[field_name]
-                    if not isinstance(m2m_item_list, list):
-                        raise TypeError(
-                            f"The value of key {field_name} type error: list type is required as the value of manytomany_fields, not {type(m2m_item_list)}"
-                        )
-                    subreducer = self.__class__(m2m_context, m2m_item_list)
-                    item[field_name] = subreducer.reduce(many=True)
+                    if m2m_item_list := item.get(field_name):                    
+                        if not isinstance(m2m_item_list, list):
+                            raise TypeError(
+                                f"The value of key {field_name} type error: list type is required as the value of manytomany_fields, not {type(m2m_item_list)}"
+                            )
+                        subreducer = self.__class__(m2m_context, m2m_item_list)
+                        item[field_name] = subreducer.reduce(many=True)
 
-        
             for field_name, fieldinfo in self.context.get(CONTENT_FILE_FIELDS, {}).items():
                 src_field = fieldinfo[SOURCE_URL_FIELDS]
                 for row in self.results:
@@ -117,7 +118,7 @@ class PipeReducer:
     
 
 
-def setupdb(*db_apps, db_settings:dict=None, default_db_name='pipe2db.sqlite3', **extra_settings):
+def setupdb(*db_apps, db_settings:dict=None, default_db_name=DEFAULT_DB_NAME, **extra_settings):
     '''Enables Django's orm and management to be used as a standalone db
         need to be run before import models
 
@@ -190,7 +191,8 @@ def setupdb(*db_apps, db_settings:dict=None, default_db_name='pipe2db.sqlite3', 
         DEFAULT_AUTO_FIELD='django.db.models.BigAutoField',
         **extra_settings
     )
-    commands='makemigrations', 'migrate',
+
+    commands = ['makemigrations', 'migrate']
     for app in apps:
         for commmand in commands:
             execute_from_command_line(['_', commmand, app])

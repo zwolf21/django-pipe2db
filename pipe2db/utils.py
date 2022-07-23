@@ -28,7 +28,7 @@ def get(model, unique_key, item):
 
 
 def update(model, unique_key, item):
-    object = get(model, unique_key, item)
+    # object = get(model, unique_key, item)
     unique_keys = _validate_uniquekey(unique_key)
     
     pkset = {k:v for k, v in item.items() if k in unique_keys}
@@ -56,6 +56,7 @@ def pop_m2m_column(item, m2m_fields):
     if m2m_fields:
         m2mset = {
             field:item.pop(field) for field in m2m_fields
+            if field in item
         }
         return m2mset
 
