@@ -34,16 +34,11 @@ author3 = {
     'model': 'db.Author',
     'unique_key': 'email',
 })
-def insert(Author, Book):
-    # Author = apps.get_model('db.Author')
+def insert(Author):
     qs = Author.objects.values_list()
     for row in qs:
         print(row)
     
-    
-    for m in apps.get_models():
-        print(m.__name__)
-
     yield author1
     yield author2
     yield author3

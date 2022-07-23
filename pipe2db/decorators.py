@@ -1,7 +1,9 @@
 from functools import wraps
 
-from .core import PipeReducer, settings
-from .utils import get_kwargnames, apps, select_kwargs
+from django.apps import apps
+
+from .core import PipeReducer
+from .utils import get_kwargnames, select_kwargs
 
 
 def pipe(context):
@@ -43,13 +45,10 @@ def pipe(context):
     def wrapper(parser):
         @wraps(parser)
         def pipe(*args, **kwargs):
-            if settings.configured:
-                models_kwargs = {
-                    m.__name__:m for m in apps.get_models()
-                }
-                results = select_kwargs(parser, *args, **kwargs, **models_kwargs)
-            else:
-                results = parser(*args, **kwargs)
+            models_kwargs = {
+                m.__name__:m for m in apps.get_models()
+            }
+            results = select_kwargs(parser, *args, **kwargs, **models_kwargs)
             reducer = PipeReducer(context, results)
             if reducer.is_valid():
                 reducer.reduce()
