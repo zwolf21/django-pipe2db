@@ -48,6 +48,27 @@ from pipe2db import pipe, setupdb
 - 장고 ORM을 Stand Alone 형태로 사용
 - 패키지/models.py 에 Model만 정의하면 바로 사용이 가능합니다
 - 사용법: setupdb(패키지)
+- 본 소스의 test/bookstore/insert.py 를 참조 하십시오
+
+```python
+## test/bookstore/insert.py
+
+from pipe2db import pipe, setupdb
+from samples import *
+
+setupdb() # finding db automatically
+# setupdb('bookstore.db') # sepecifing db app
+
+@pipe({
+    'model': 'db.Author',  # the model class in db/models.py 
+    'unique_key': 'email',
+    'method': 'update'
+})
+def insert():
+    yield author1
+    yield author2
+    yield author3
+```
     
 ```python
 ## somecrawler.py
@@ -71,6 +92,7 @@ def crawl(...):
 
 ```python
 ## crawer.py
+
 from pipe2db import pipe, setupdb
 
 ## 모듈을 지정하지 않으면 crawler.py 인근의 models.py 를 포함하는 모듈을 탐색하여 자동으로 세팅 해줍니다
