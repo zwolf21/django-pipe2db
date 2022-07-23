@@ -1,13 +1,10 @@
 import argparse, os, sys
 
-ENV_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(__file__)
+ENV_DIR = os.path.dirname(BASE_DIR)
+sys.path.append(ENV_DIR)
 
-
-try:
-    from bookstore.insert import insert
-except:
-    sys.path.append(ENV_DIR)
-    from bookstore.insert import insert
+from bookstore.insert import insert
 
 
 
@@ -24,7 +21,6 @@ def main():
 
     if args.appname == 'insert':
         insert()
-
 
 
 if __name__ == '__main__':
