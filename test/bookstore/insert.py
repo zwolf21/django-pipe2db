@@ -2,7 +2,7 @@ from pipe2db import pipe, setupdb
 from django.apps import apps
 
 
-setupdb()
+setupdb(default_db_name='pipe2db_test.sqlite3')
 
 
 author1 = {
@@ -53,9 +53,7 @@ def insert(Author):
 })
 def insert_and_update():
     author1['first_name'] = 'updated'
-    yield author2
-    yield author3
-    yield author1
+    yield from [author1, author2, author3]
 
 
 
