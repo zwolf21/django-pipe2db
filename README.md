@@ -18,6 +18,9 @@
       - [rename_fields](#rename_fields)
       - [exclude_fields](#exclude_fields)
       - [foreignkey_fields](#foreignkey_fields)
+      - [manytomany_fields](#manytomany_fields)
+  - [- See complicate context and data nested level example](#--see-complicate-context-and-data-nested-level-example)
+      - [contentfile_fields](#contentfile_fields)
 
 
 
@@ -163,6 +166,7 @@ from pip2db import pipe
 
 @pipe({
     'model': 'db.Author'
+    # 'model': 'yourapp.YourModel' on django project
 })
 def abc_crawler():
     ...
@@ -276,6 +280,7 @@ context_author = {
 
 ```python
 # incorrect create.py
+from pipe2db import pipe
 
 author_incorrect = {
     'email': 'batman1@google.com',
@@ -304,6 +309,7 @@ def gen_author(...):
 
 ```python
 # correct as update.py
+from pipe2db import pipe
 
 author_corrected = {
     'email': 'batman1@google.com',
@@ -336,6 +342,9 @@ def gen_author(...):
 
 ```python
 # models.py
+from django.db import models
+
+
 class Author(models.Models):
     ...
     ...
@@ -383,6 +392,7 @@ def book_crawler(abc, defg, jkl=None):
   
 ```python
 # bookcrawler.py
+from pipe2db import pipe
 ...
 ...
 
@@ -419,7 +429,7 @@ Mapping of Relative Data
 
 #### foreignkey_fields
 - Creat records by generation according to the foreign key relationship between tables
-- Recursively nest parent data to children data
+- Recursively nest parent dict to children dict
 - There are two way of create relationship data
 
 ```python
@@ -447,6 +457,8 @@ class Book(models.Model):
 
 ```python
 # some crawler.py
+from pipe2db import pipe
+
 # 1. Generate data of book author nested
 
 context_author = {
@@ -481,6 +493,8 @@ def parse_book():
 
 ```python
 # some crawler.py 
+from pipe2db import pipe
+
 # 2. Generate data of author and book sequentially
 
 @pipe(context_author)
@@ -506,4 +520,104 @@ def parse_book():
     yield book
 ```
 
+#### manytomany_fields
+- Create data for manytomany relationships
+- Generate data with nesting the children m2m data in the parent data key in the form of a list
 
+```python
+# models.py 
+from django.db import models
+
+
+class Book(models.Model):
+    title = models.CharField(max_length=200)
+    isbn = models.CharField('ISBN', max_length=13, unique=True)
+
+    genre = models.ManyToManyField('db.Genre')
+
+    class Meta:
+        db_table = 'book'
+
+
+class Genre(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+
+    class Meta:
+        db_table = 'genre'
+
+```
+
+```python
+# m2m_generator.py
+from pipe2db import pipe
+
+context_genre = {
+    'model': 'db.Genre',
+    'unique_key': 'name'
+}
+
+context_book = {
+    'model': 'db.Book',
+    'unique_key': 'isbn',
+    'manytomany_fields': {
+        'genre': context_genre
+    }
+}
+
+@pipe(context_book)
+def gen_book_with_genre():
+    genre1 = {'name': 'action'}
+    genre2 = {'name': 'fantasy'}
+
+    book1 = {
+        'title': 'oh happy day', 'isbn': '2828233644', 'genre': [genre2], # nest genres to list
+    }
+    book2 = {
+        'title': 'python', 'isbn': '9875230846', 'genre': [genre1, genre2],
+    }
+    book3 = {
+        'title': 'java', 'isbn': '1234640841', # has no genre
+    }
+    yield from [book1, book2, book3]
+```
+
+- [See complicate context and data nested level example](https://github.com/zwolf21/django-pipe2db/blob/master/testsite/bookstore/scraper.py)
+---
+
+Create record with contentfiles
+
+#### contentfile_fields
+- Saving file via ContentFile class from django.core.files module
+- source_url_field is specified as meta data for determinding file name
+
+```python
+# models.py
+from django.db import models
+
+class BookImage(models.Model):
+    img = models.ImageField()
+
+    class Meta:
+        db_table = 'bookimage'
+
+```
+
+```python
+from pipe2db import pipe
+
+@pipe({
+    'model': 'db.BookImage',
+    'contentfile_fields': {
+        'img': {
+            'source_url_field': 'src',
+        }
+    },
+    'exclude_fields': ['src'] # when model dose not need src data
+})
+def image_crawler(response):
+    image_data = {
+        'img': 'response_content',
+        'src': response.url #  needed for extracting filename as source_url_field
+    }
+    yield image_data
+```

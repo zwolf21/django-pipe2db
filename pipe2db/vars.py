@@ -19,5 +19,4 @@ VALIDATE_KEYS = [
     METHOD,
 ]
 
-
 DEFAULT_DB_NAME = 'pipe2db.sqlite3'

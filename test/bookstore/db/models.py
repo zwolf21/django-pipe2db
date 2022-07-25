@@ -62,3 +62,11 @@ class BookInstance(models.Model):
     def __str__(self):
         """String for representing the Model object."""
         return f'{self.id} ({self.book.title})'
+
+
+class BookImage(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    img = models.ImageField()
+
+    class Meta:
+        db_table = 'bookimage'
