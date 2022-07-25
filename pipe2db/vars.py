@@ -1,10 +1,10 @@
-METHOD = 'method'
 METHOD_GET = 'get'
 METHOD_CREATE = 'create'
 METHOD_UPDATE = 'update'
 
 MODEL = 'model'
 UNIQUE_KEY = 'unique_key'
+METHOD = 'method'
 FOREIGIN_KEY_FIELDS = 'foreignkey_fields'
 MANYTOMANY_FIELDS = 'manytomany_fields'
 SOURCE_URL_FIELDS = 'source_url_field'

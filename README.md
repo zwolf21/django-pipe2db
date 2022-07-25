@@ -10,11 +10,14 @@
   - [Quick Start](#quick-start)
     - [1. Using django orm as standalone](#1-using-django-orm-as-standalone)
     - [2. Using with django project](#2-using-with-django-project)
-  - [Tutorial](#tutorial)
+  - [Useage](#useage)
     - [Argument of pipe decorator as context](#argument-of-pipe-decorator-as-context)
       - [model](#model)
       - [unique_key](#unique_key)
       - [method](#method)
+      - [rename_fields](#rename_fields)
+      - [exclude_fields](#exclude_fields)
+      - [foreignkey_fields](#foreignkey_fields)
 
 
 
@@ -146,7 +149,7 @@ python bookstore/insert.py
 
 
 --- 
-## Tutorial
+## Useage
 
 ### Argument of pipe decorator as context
 - A context is a dictionary that describes the relationship between the model and the data
@@ -222,6 +225,8 @@ def abc():
 - To identify data with one or several keys as unique_together
 
 ```python
+# models.py
+
 # unique key model
 class Author(models.Model):
     ...
@@ -240,6 +245,8 @@ context_author = {
 
 > If uniqueness is not guaranteed with one key, add another
 >```python
+># models.py
+>
 ># unique together model
 >class Author(models.Model):
 >    ...
@@ -321,5 +328,182 @@ def gen_author(...):
 >|id|email|first_name|last_name|date_of_birth|date_of_death|
 >|--|--|--|--|--|--|
 >|3|batman1@google.com|Hugh|jackman|1968-10-12|NULL|
+
+
+#### rename_fields
+- Dictionary of between data and model as key:field mapping
+- Used when the data key and the model field name are different
+
+```python
+# models.py
+class Author(models.Models):
+    ...
+    ...
+
+class Book(models.Model):
+    title = models.CharField(max_length=200) 
+    isbn = models.CharField('ISBN', max_length=13, unique=True)
+
+    class Meta:
+        db_table = 'book'
+```
+
+```python
+# book_crawler.py
+
+context = {
+    'model': 'db.Book',
+    'unique_key': 'isbn',
+    'rename_fields': {
+        'header' : 'title', 
+        'book_id': 'isbn',
+    }
+}
+# map header -> title, book_id -> isbn
+
+@pipe(context)
+def book_crawler(abc, defg, jkl=None):
+    book_list = [
+        {
+            'header': 'oh happy day', # header to title
+            'book_id': '1234640841',
+        },
+        {
+            'header': 'oh happy day',
+            'book_id': '9214644250',
+        },
+    ]
+    yield from book_list
+```
+
+#### exclude_fields
+- List of keys to excluds
+- Used when the data has a key that is not in the field names in the model
+- Filter too much information from data that model cannot consume
+  
+```python
+# bookcrawler.py
+...
+...
+
+context = {
+    'model': 'db.Book',
+    'unique_key': 'isbn',
+    'rename_fields': {
+        'header' : 'title', 
+        'book_id': 'isbn',
+    },
+    'exclude_fields': ['status'] # exclude
+}
+
+@pipe(context)
+def book_crawler(abc, defg, jkl=None):
+    book_list = [
+        {
+            'header': 'oh happy day', # header to title
+            'book_id': '1234640841',
+            'status': 'on sales', # status is not needed in Book model
+        },
+        {
+            'header': 'oh happy day',
+            'book_id': '9214644250',
+            'sstatus': 'no stock',
+        },
+    ]
+    yield from book_list
+
+```
+
+--- 
+Mapping of Relative Data
+
+#### foreignkey_fields
+- Creat records by generation according to the foreign key relationship between tables
+- Recursively nest parent data to children data
+- There are two way of create relationship data
+
+```python
+# models.py
+# two models of related with foreign key
+from django.db import models
+
+
+class Author(models.Model):
+    email = models.EmailField('Email', unique=True)
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'author'
+
+
+class Book(models.Model):
+    author = models.ForeignKey('Author', on_delete=models.CASCADE, null=True) # fk
+    isbn = models.CharField('ISBN', max_length=13, unique=True)
+    title = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = 'book'
+```
+
+```python
+# some crawler.py
+# 1. Generate data of book author nested
+
+context_author = {
+    'model': 'db.Author',
+    'unique_key': 'email',
+    'method': 'update'
+}
+
+context_book = {
+    'model': 'db.Book',
+    'unique_key': 'isbn',
+    'foreignkey_fields': {
+        'book': context_author
+    }
+}
+
+# author data is nested in book data
+@pipe(context_book)
+def parse_book():
+    author1 = {
+        'email': 'pbr112@naver.com',
+        'name': 'hs moon',
+    }
+    book = {
+        'author': author1,
+        'title': 'django-pipe2db',
+        'isbn': '291803928123'
+    }
+    yield book
+
+```
+
+```python
+# some crawler.py 
+# 2. Generate data of author and book sequentially
+
+@pipe(context_author)
+def parse_author():
+    author1 = {
+        'email': 'pbr112@naver.com',
+        'name': 'hs moon',
+    }
+    yield author1
+
+# create author first
+author1 = parse_author()
+
+# create book after and connect fk relation to author
+@pipe(context_book)
+def parse_book():
+    book = {
+        'author': author1['email'], # Since the author has already been created, it possible to pass email as pk of author only
+        # 'author': author1, # or same as above
+        'title': 'django-pipe2db',
+        'isbn': '291803928123'
+    }
+    yield book
+```
 
 
