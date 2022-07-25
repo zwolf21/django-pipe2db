@@ -171,11 +171,13 @@ def find_models_module(current=None):
 
     paths = []
     while is_subdir(root, current):
-        for path in glob.glob('**/models.py', recursive=True, root_dir=current):
-            p = os.path.join(current, path)
-            if p in paths:
+        globs = f'{current}/**/models.py'
+        print(globs)
+        for path in glob.glob(globs, recursive=True):
+            path = os.path.realpath(path)
+            if path in paths:
                 continue
-            paths.append(p)
+            paths.append(path)
         current = os.path.dirname(current)
 
     if not paths:
