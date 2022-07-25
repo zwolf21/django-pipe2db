@@ -14,7 +14,7 @@
     - [Argument of pipe decorator as context](#argument-of-pipe-decorator-as-context)
       - [model](#model)
       - [unique_key](#unique_key)
-  
+      - [method](#method)
 
 
 
@@ -260,5 +260,66 @@ context_author = {
 >```
 
 
+#### method
+- Creates or updates data with a unique key specified
+- Defaults is create
+- In create mode, data is inserted based on unique.
+- In update mode as wrapper update_or_create of django method, creates records if they don't exist, otherwise modifies existing records
+
+
+```python
+# incorrect create.py
+
+author_incorrect = {
+    'email': 'batman1@google.com',
+    'first_name': 'who', # incorrect
+    'last_name': 'jackman',
+    'date_of_birth': '1988-07-25', # incorrect
+    'date_of_death': None
+}
+
+context = {
+    'model': 'db.Author',
+    'unique_key': 'email',
+    # 'method': 'create' no need to specify if create
+}
+
+@pipe(context)
+def gen_author(...):
+    yield author_incorrect
+```
+> result table
+>
+>|id|email|first_name|last_name|date_of_birth|date_of_death|
+>|--|--|--|--|--|--|
+>|3|batman1@google.com|who|jackman|1988-07-25|NULL|
+
+
+```python
+# correct as update.py
+
+author_corrected = {
+    'email': 'batman1@google.com',
+    'first_name': 'Hugh', # correct
+    'last_name': 'jackman',
+    'date_of_birth': '1968-10-12', # correct
+    'date_of_death': None
+}
+
+context = {
+    'model': 'db.Author',
+    'unique_key': 'email',
+    'method': 'update', # for update record by corrected data
+}
+
+@pipe(context)
+def gen_author(...):
+    yield author_corrected
+```
+> result table
+>
+>|id|email|first_name|last_name|date_of_birth|date_of_death|
+>|--|--|--|--|--|--|
+>|3|batman1@google.com|Hugh|jackman|1968-10-12|NULL|
 
 
