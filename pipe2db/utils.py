@@ -1,4 +1,5 @@
-import inspect, itertools, os, glob
+import functools, inspect, itertools, os, glob
+from collections import abc
 
 from django.apps import apps
 from django.db import models
@@ -202,3 +203,35 @@ def select_kwargs(callable, *args, allowed_params:list=None, **kwargs):
         if key in allowed_params
     }
     return callable(*args, **kwargs)
+
+
+def is_many_type(value) -> bool:
+    if isinstance(value, abc.Iterable):
+        if isinstance(value, abc.Mapping):
+            return False
+        elif isinstance(value, abc.Sequence):
+            if isinstance(value, (str, bytes)):
+                return False
+        return True
+    return False
+    
+
+
+def singulize(value) -> abc.Generator:
+    if not is_many_type(value):
+        if value is not None:
+            yield value
+    else:
+        for row in value:
+            yield from singulize(row)
+
+
+def pluralize(value) -> list:
+    pluralized = []
+    if not is_many_type(value):
+        if value is not None:
+            pluralized.append(value)
+    else:
+        for row in value:
+            pluralized += pluralize(row)
+    return pluralized

@@ -1,14 +1,11 @@
 import os, sys, inspect, importlib
-from collections import abc
-from types import GeneratorType
 from pathlib import Path
-from copy import deepcopy
 
 from django.conf import settings
 from django.core.management import execute_from_command_line
 from django.core.files.base import ContentFile
 
-from .utils import get_or_create, get_base_module_name, get_module_dir, find_models_module
+from .utils import get_or_create, get_base_module_name, get_module_dir, find_models_module, pluralize
 from .vars import *
 
 
@@ -17,24 +14,9 @@ class PipeReducer:
 
     def __init__(self, context, results):
         self.context = self._validate_context(context)
-        self.results = self._validate_results(results)
-    
-    def _validate_results(self, results):
-        if isinstance(results, str):
-            results = [results]
-
-        if isinstance(results, abc.Mapping):
-            results = [results]
-
-        if isinstance(results, (GeneratorType, map, filter)):
-            results = list(results)
-        
-        if not results or not results[0]:
-            return            
-        return deepcopy(results)
+        self.results = pluralize(results)
     
     def _validate_context(self, context, stauts='model', pwd='top-level'):
-
         for key, val in context.items():
             if key not in VALIDATE_KEYS:
                 raise KeyError(f"{key}: not a valid key name. (value:{val})")
@@ -72,8 +54,6 @@ class PipeReducer:
             for field_name, fk_context in self.context.get(FOREIGIN_KEY_FIELDS, {}).items():
                 for item in self.results:
                     if fk_item := item.get(field_name):
-                        # if issubclass(fk_item.__class__, abc.Mapping):
-                        #     fk_item = deepcopy(fk_item)
                         subreducer = self.__class__(fk_context, fk_item)
                         item[field_name] = subreducer.reduce(many=False)
 

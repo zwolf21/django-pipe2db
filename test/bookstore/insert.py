@@ -28,31 +28,25 @@ author3 = {
 }
 
 
-
-# create
-@pipe({
+context_author = {
     'model': 'db.Author',
     'unique_key': 'email',
-})
+}
+
+# create
+@pipe(context_author)
 def insert(Author):
     qs = Author.objects.values_list()
     for row in qs:
         print(row)
     
-    yield author1
-    yield author2
-    yield author3
+    yield [author1, author2, author3]
 
-
-
+context_author['method'] = 'update'
 # create or update
-@pipe({
-    'model': 'db.Author',
-    'unique_key': 'email',
-    'method': 'update'
-})
+@pipe(context_author)
 def insert_and_update():
-    author1['first_name'] = 'updated'
+    author1['first_name'] = 'updated1'
     yield from [author1, author2, author3]
 
 
