@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name='django-pipe2db',
-	version='1.0.1',
+	version='1.0.2',
 	license='MIT',
 	description='A decorator that connects django model and data generator function',
 	long_description=Path('README.md').read_text(encoding='utf-8'),
