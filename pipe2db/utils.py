@@ -1,4 +1,4 @@
-import functools, inspect, itertools, os, glob
+import inspect, itertools, os, glob
 from collections import abc
 
 from django.apps import apps
