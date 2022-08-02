@@ -9,6 +9,8 @@ from bookstore.insert import insert, insert_and_update
 
 
 def main():
+    '''python test insert
+    '''
     
     argparser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter, description='django-pipe2db test'

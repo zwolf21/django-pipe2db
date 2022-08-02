@@ -14,7 +14,7 @@ setup(
 	author_email = 'pbr112@naver.com',
 	keywords=['pipe2db', 'django-pipe2db', 'django orm', 'standalone django', 'standalone django orm'],
 	url='https://github.com/zwolf21/django-pipe2db',
-	packages=find_packages(exclude=['test', 'testsite', 'useage', 'docs', 'useage']),
+	packages=find_packages(exclude=['test', 'test.*']),
 	install_requires=['django'],
 	classifiers=[
         'Framework :: Django',
