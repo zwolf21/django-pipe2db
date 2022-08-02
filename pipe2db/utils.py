@@ -1,4 +1,4 @@
-import functools, inspect, itertools, os, glob
+import copy, inspect, itertools, os, glob
 from collections import abc
 
 from django.apps import apps
@@ -230,6 +230,7 @@ def pluralize(value) -> list:
     pluralized = []
     if not is_many_type(value):
         if value is not None:
+            value = copy.deepcopy(value)
             pluralized.append(value)
     else:
         for row in value:

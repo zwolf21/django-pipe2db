@@ -1,9 +1,11 @@
 from functools import wraps
+from itertools import tee
+from collections import abc
 
 from django.apps import apps
 
 from .core import PipeReducer
-from .utils import get_kwargnames, select_kwargs
+from .utils import select_kwargs
 
 
 def pipe(context):
@@ -49,7 +51,11 @@ def pipe(context):
                 m.__name__:m for m in apps.get_models()
             }
             results = select_kwargs(parser, *args, **kwargs, **models_kwargs)
-            reducer = PipeReducer(context, results)
+            if isinstance(results, abc.Generator):
+                results, results2 = tee(results)
+                reducer = PipeReducer(context, results2)
+            else:
+                reducer = PipeReducer(context, results)
             if reducer.is_valid():
                 reducer.reduce()
             return results
